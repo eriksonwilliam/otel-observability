@@ -4,6 +4,9 @@ services:
     environment:
       TELEMETRY: "otel"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
+      # Exporta as métricas a cada 5s (padrão do OTel é 60s) — deixa o
+      # dashboard reagir à carga em segundos, não em minutos.
+      OTEL_METRIC_EXPORT_INTERVAL: "5000"
     ports:
       - "8080:8080"
     depends_on:
