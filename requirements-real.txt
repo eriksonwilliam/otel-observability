@@ -1,0 +1,5 @@
+# Dependências do adapter real de observabilidade (OpenTelemetry via OTLP).
+-r requirements.txt
+opentelemetry-sdk>=1.27
+opentelemetry-api>=1.27
+opentelemetry-exporter-otlp-proto-grpc>=1.27

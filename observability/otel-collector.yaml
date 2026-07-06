@@ -1,0 +1,31 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+processors:
+  batch: {}
+
+exporters:
+  # Traces para o Tempo (OTLP).
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+  # Métricas expostas para o Prometheus raspar em :8889/metrics.
+  # add_metric_suffixes: false mantém os nomes exatamente como instrumentados.
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    add_metric_suffixes: false
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp/tempo]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [prometheus]
