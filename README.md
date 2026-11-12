@@ -1,5 +1,24 @@
 # otel-observability
 
+A Python/FastAPI reference service for traces and RED metrics with OpenTelemetry,
+Collector, Tempo, Prometheus, and Grafana. Telemetry adapters are replaceable so
+application tests can run without a collector.
+
+### HTTP measurement behavior
+
+The middleware records method, route template, status, and duration in a `finally`
+block. Unhandled application exceptions are counted as **500** and still propagate
+to the framework's error handling. Known routes use templates such as
+`/tasks/{task_id}/complete`; unmatched URLs share the **`<unmatched>`** label.
+This avoids creating a separate metric series for every unknown URL or task ID.
+The middleware measures response construction, not streaming-body completion.
+
+Regression tests cover unexpected failures, unmatched URLs, and parameterized
+routes. Run `pip install -r requirements-dev.txt`, then `pytest` and `ruff check .`.
+Unit tests use a spy adapter; validate OTLP export separately with the Docker stack.
+
+### Documentação em português
+
 Serviço em **Python + FastAPI** instrumentado com **OpenTelemetry** (traces +
 métricas **RED**) e um **stack de observabilidade completo** via docker-compose:
 OpenTelemetry Collector → **Tempo** (traces) e **Prometheus** (métricas) →
