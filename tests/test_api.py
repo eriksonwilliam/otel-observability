@@ -81,3 +81,30 @@ def test_unknown_route_still_measured():
     client, tel = _client()
     assert client.get("/nao-existe").status_code == 404
     assert tel.requests  # middleware mediu mesmo a rota 404
+
+
+def test_unhandled_failure_is_measured_as_500():
+    telemetry = SpyTelemetry()
+    app = create_app(TaskService(InMemoryTaskStore(), telemetry), telemetry)
+
+    @app.get("/broken")
+    def broken():
+        raise RuntimeError("unexpected failure")
+
+    client = TestClient(app, raise_server_exceptions=False)
+    assert client.get("/broken").status_code == 500
+    assert telemetry.requests == [("GET", "/broken", 500)]
+
+
+def test_unmatched_urls_share_a_bounded_label():
+    client, telemetry = _client()
+    assert client.get("/unknown-one").status_code == 404
+    assert client.get("/unknown-two").status_code == 404
+    assert telemetry.requests == [("GET", "<unmatched>", 404)] * 2
+
+
+def test_route_parameters_are_not_metric_labels():
+    client, telemetry = _client()
+    client.post("/tasks/first/complete")
+    client.post("/tasks/second/complete")
+    assert telemetry.requests == [("POST", "/tasks/{task_id}/complete", 404)] * 2
