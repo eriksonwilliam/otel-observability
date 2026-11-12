@@ -21,11 +21,15 @@ def create_app(service: TaskService, telemetry: Telemetry) -> FastAPI:
     @app.middleware("http")
     async def telemetry_mw(request: Request, call_next):  # type: ignore[no-untyped-def]
         start = time.perf_counter()
-        response = await call_next(request)
-        duration_ms = (time.perf_counter() - start) * 1000
-        route = getattr(request.scope.get("route"), "path", request.url.path)
-        telemetry.record_request(request.method, route, response.status_code, duration_ms)
-        return response
+        status = 500
+        try:
+            response = await call_next(request)
+            status = response.status_code
+            return response
+        finally:
+            duration_ms = (time.perf_counter() - start) * 1000
+            route = getattr(request.scope.get("route"), "path", "<unmatched>")
+            telemetry.record_request(request.method, route, status, duration_ms)
 
     @app.exception_handler(ValidationError)
     async def _validation(_: Request, exc: ValidationError) -> JSONResponse:
