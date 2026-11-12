@@ -121,3 +121,25 @@ ruff check . && ruff format --check .
 ## Licença
 
 MIT.
+
+## Export and stack integration checks (2026-11-12)
+
+```bash
+pip install -r requirements-dev.txt -r requirements-real.txt
+RUN_OTLP_INTEGRATION=1 pytest -o addopts='' tests/integration/test_otlp.py
+docker compose up --build -d
+python scripts/check_stack.py
+docker compose down -v
+```
+
+The first test uses the actual OTLP gRPC exporters and an ephemeral local receiver.
+It asserts metric names/labels/count and an exported span. It is not a Collector or
+Tempo test. The separate `docker-stack` CI job checks API -> OTLP -> Collector ->
+Prometheus, route-template labels and Grafana dashboard provisioning. It does not
+assert trace storage in Tempo, browser rendering or end-to-end latency. Local Docker
+validation was unavailable in the authoring environment; inspect that CI job before
+claiming the complete stack passed. Docker teardown removes this lab's volumes.
+
+Next: exercise trace querying in Tempo and cross-service propagation, then instrument
+RAG stages and consumer recovery using bounded attributes. A healthy HTTP API does
+not imply healthy Kafka consumers in the companion repository.
