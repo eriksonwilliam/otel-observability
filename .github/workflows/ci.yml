@@ -31,3 +31,27 @@ jobs:
 
       - name: Testes com cobertura (falha abaixo de 100%)
         run: pytest
+
+  otlp-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-dev.txt -r requirements-real.txt
+      - run: RUN_OTLP_INTEGRATION=1 pytest -o addopts='' tests/integration/test_otlp.py
+
+  docker-stack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: docker compose up --build -d
+      - run: python scripts/check_stack.py
+      - if: failure()
+        run: docker compose logs --no-color
+      - if: always()
+        run: docker compose down -v
